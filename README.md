@@ -1,2 +1,3 @@
-# pytest-runner-google-cloud-function-
+# pytest-runner-google-cloud-function
 Run Pytest with Google Cloud Function
+
