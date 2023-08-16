@@ -9,6 +9,9 @@ import { GoogleBetaProvider } from "../.gen/providers/google-beta/provider";
 import { GoogleProjectService } from "../.gen/providers/google-beta/google-project-service";
 import { GoogleServiceAccount } from "../.gen/providers/google-beta/google-service-account";
 
+import path = require("path");
+import fs = require("fs");
+
 
 export interface ApigatewayConstructProps {
     readonly api: string;
@@ -51,46 +54,15 @@ export class ApigatewayConstruct extends Construct {
             dependsOn: services,
         });
 
+        ;
+
         const apiConfig = new GoogleApiGatewayApiConfigA(this, "apiConfig", {
             api: apiGatewayApi.apiId,
             openapiDocuments: [
                 {
                     document: {
                         path: "spec.yaml",
-                        contents: Fn.base64encode(`
-swagger: '2.0'
-info:
-  title: api-gateway
-  description: API Gateway
-  version: 1.0.0
-schemes:
-  - https
-produces:
-  - application/json
-paths:
-  /pytest:
-    get:
-      summary: Run PyTest
-      operationId: pytest-v1
-      security:
-        - api_key: []
-      x-google-backend:
-        address: ${props.url} # You need to change this!
-      consumes:
-        - application/json
-      produces:
-        - application/json        
-      responses:
-        '200':
-          description: OK
-
-
-securityDefinitions:
-  api_key:
-    type: apiKey
-    name: key
-    in: query
-                        `)
+                        contents: Fn.base64encode(fs.readFileSync(path.resolve(__dirname, "spec.yaml"), "utf8").replace("{{URL}}", props.url)),
                     }
                 },
             ],
@@ -114,6 +86,12 @@ securityDefinitions:
             provider: props.provider,
             dependsOn: services,
         });
+
+        new GoogleProjectService(this, `GatewayService`, {
+            project: props.project,
+            service: this.gateway.,
+            disableOnDestroy: false,
+        })
 
     }
 
