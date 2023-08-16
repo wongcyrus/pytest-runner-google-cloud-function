@@ -1,11 +1,11 @@
 import { Construct } from "constructs";
 import { hashElement } from 'folder-hash';
 import { DataArchiveFile } from "../.gen/providers/archive/data-archive-file";
-import { CloudRunServiceIamBinding } from "../.gen/providers/google/cloud-run-service-iam-binding";
-import { Cloudfunctions2Function, Cloudfunctions2FunctionEventTrigger } from "../.gen/providers/google/cloudfunctions2-function";
-import { Cloudfunctions2FunctionIamBinding } from "../.gen/providers/google/cloudfunctions2-function-iam-binding";
-import { ServiceAccount } from "../.gen/providers/google/service-account";
-import { StorageBucketObject } from "../.gen/providers/google/storage-bucket-object";
+import { GoogleCloudRunServiceIamBinding } from "../.gen/providers/google-beta/google-cloud-run-service-iam-binding";
+import { GoogleCloudfunctions2Function, GoogleCloudfunctions2FunctionEventTrigger } from "../.gen/providers/google-beta/google-cloudfunctions2-function";
+import { GoogleCloudfunctions2FunctionIamBinding } from "../.gen/providers/google-beta/google-cloudfunctions2-function-iam-binding";
+import { GoogleServiceAccount } from "../.gen/providers/google-beta/google-service-account";
+import { GoogleStorageBucketObject } from "../.gen/providers/google-beta/google-storage-bucket-object";
 import { CloudFunctionDeploymentConstruct } from "./cloud-function-deployment-construct";
 import path = require("path");
 
@@ -18,13 +18,13 @@ export interface CloudFunctionConstructProps {
     readonly timeout?: number;
     readonly cloudFunctionDeploymentConstruct: CloudFunctionDeploymentConstruct;
     readonly environmentVariables?: { [key: string]: string };
-    readonly eventTrigger?: Cloudfunctions2FunctionEventTrigger;
+    readonly eventTrigger?: GoogleCloudfunctions2FunctionEventTrigger;
     readonly makePublic?: boolean;
 }
 
 export class CloudFunctionConstruct extends Construct {
-    public cloudFunction!: Cloudfunctions2Function;
-    public serviceAccount: ServiceAccount;
+    public cloudFunction!: GoogleCloudfunctions2Function;
+    public serviceAccount: GoogleServiceAccount;
     private props: CloudFunctionConstructProps;
     public project: string;
 
@@ -32,7 +32,7 @@ export class CloudFunctionConstruct extends Construct {
         super(scope, id);
         let accountId = props.functionName + props.entryPoint.replace(/[^a-z0-9]/gi, '');
         accountId = accountId.substring(0, 27).toLowerCase();
-        this.serviceAccount = new ServiceAccount(this, "service-account", {
+        this.serviceAccount = new GoogleServiceAccount(this, "service-account", {
             accountId: accountId,
             project: props.cloudFunctionDeploymentConstruct.project,
             displayName: props.functionName + props.entryPoint ?? "",
@@ -55,14 +55,14 @@ export class CloudFunctionConstruct extends Construct {
             outputPath: path.resolve(__dirname, "..", "cdktf.out", "functions", outputFileName)
         });
 
-        const storageBucketObject = new StorageBucketObject(this, "storage-bucket-object", {
+        const storageBucketObject = new GoogleStorageBucketObject(this, "storage-bucket-object", {
             name: outputFileName,
             bucket: this.props.cloudFunctionDeploymentConstruct.sourceBucket.name,
             source: code.outputPath,
         });
 
 
-        this.cloudFunction = new Cloudfunctions2Function(this, "cloud-function", {
+        this.cloudFunction = new GoogleCloudfunctions2Function(this, "cloud-function", {
             name: this.props.functionName.toLowerCase(),
             project: this.props.cloudFunctionDeploymentConstruct.project,
             location: this.props.cloudFunctionDeploymentConstruct.region,
@@ -87,7 +87,7 @@ export class CloudFunctionConstruct extends Construct {
         });
 
         const member = props.makePublic ?? false ? "allUsers" : "serviceAccount:" + this.serviceAccount.email;
-        new Cloudfunctions2FunctionIamBinding(this, "cloudfunctions2-function-iam-member", {
+        new GoogleCloudfunctions2FunctionIamBinding(this, "cloudfunctions2-function-iam-member", {
             project: this.cloudFunction.project,
             location: this.cloudFunction.location,
             cloudFunction: this.cloudFunction.name,
@@ -95,7 +95,7 @@ export class CloudFunctionConstruct extends Construct {
             members: [member]
         });
 
-        new CloudRunServiceIamBinding(this, "cloud-run-service-iam-binding", {
+        new GoogleCloudRunServiceIamBinding(this, "cloud-run-service-iam-binding", {
             project: this.props.cloudFunctionDeploymentConstruct.project,
             location: this.cloudFunction.location,
             service: this.cloudFunction.name,

@@ -1,9 +1,9 @@
 import { Construct } from "constructs";
 
 import { ArchiveProvider } from "../.gen/providers/archive/provider";
-import { AppEngineApplication } from "../.gen/providers/google/app-engine-application";
-import { ProjectService } from "../.gen/providers/google/project-service";
-import { StorageBucket } from "../.gen/providers/google/storage-bucket";
+import { GoogleAppEngineApplication } from "../.gen/providers/google-beta/google-app-engine-application";
+import { GoogleProjectService } from "../.gen/providers/google-beta/google-project-service";
+import { GoogleStorageBucket } from "../.gen/providers/google-beta/google-storage-bucket";
 import { RandomProvider } from "../.gen/providers/random/provider";
 import { StringResource } from "../.gen/providers/random/string-resource";
 
@@ -16,11 +16,11 @@ export interface CloudFunctionDeploymentConstructProps {
 }
 
 export class CloudFunctionDeploymentConstruct extends Construct {
-    public readonly sourceBucket: StorageBucket;
+    public readonly sourceBucket: GoogleStorageBucket;
     public readonly project: string;
     public readonly region: string;
 
-    public readonly const = [
+    public readonly apis = [
         "iam.googleapis.com",
         "cloudresourcemanager.googleapis.com",
         "apikeys.googleapis.com",
@@ -36,27 +36,14 @@ export class CloudFunctionDeploymentConstruct extends Construct {
 
     constructor(scope: Construct, id: string, props: CloudFunctionDeploymentConstructProps) {
         super(scope, id);
-        
-        
+
+
         this.project = props.project;
         this.region = props.region;
 
-        const apis = [
-            "iam.googleapis.com",
-            "cloudresourcemanager.googleapis.com",
-            "apikeys.googleapis.com",
-            "run.googleapis.com",
-            "artifactregistry.googleapis.com",
-            "cloudfunctions.googleapis.com",
-            "storage-api.googleapis.com",
-            "storage-component.googleapis.com",
-            "cloudbuild.googleapis.com",
-            "eventarc.googleapis.com",
-            "secretmanager.googleapis.com",
-        ];
         const services = [];
-        for (const api of apis) {
-            services.push(new ProjectService(this, `${api.replaceAll(".", "")}`, {
+        for (const api of this.apis) {
+            services.push(new GoogleProjectService(this, `${api.replaceAll(".", "")}`, {
                 project: props.project,
                 service: api,
                 disableOnDestroy: false,
@@ -69,7 +56,7 @@ export class CloudFunctionDeploymentConstruct extends Construct {
             upper: false,
         })
 
-        this.sourceBucket = new StorageBucket(this, "sourceBucket", {
+        this.sourceBucket = new GoogleStorageBucket(this, "sourceBucket", {
             name: "source" + bucketSuffix.result,
             project: props.project,
             location: props.region,
@@ -89,7 +76,7 @@ export class CloudFunctionDeploymentConstruct extends Construct {
 
         // This is a hack to enable datastore API for the project
         // https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/datastore_index
-        new AppEngineApplication(this, "app-engine-application", {
+        new GoogleAppEngineApplication(this, "app-engine-application", {
             locationId: props.region,
             project: props.project,
             databaseType: "CLOUD_DATASTORE_COMPATIBILITY",

@@ -2,13 +2,16 @@ import { Construct } from "constructs";
 import { App, TerraformOutput, TerraformStack } from "cdktf";
 import { ArchiveProvider } from "./.gen/providers/archive/provider";
 import { RandomProvider } from "./.gen/providers/random/provider";
-import { DataGoogleBillingAccount } from "./.gen/providers/google/data-google-billing-account";
-import { GoogleProvider } from "./.gen/providers/google/provider/index";
-import { Project } from "./.gen/providers/google/project";
+import { DataGoogleBillingAccount } from "./.gen/providers/google-beta/data-google-billing-account";
+
+
+import { GoogleBetaProvider } from "./.gen/providers/google-beta/provider/index";
+import { GoogleProject } from "./.gen/providers/google-beta/google-project";
 import { CloudFunctionDeploymentConstruct } from "./components/cloud-function-deployment-construct";
 import { CloudFunctionConstruct } from "./components/cloud-function-construct";
 
 import * as dotenv from 'dotenv';
+import { ApigatewayConstruct } from "./components/api-gateway-construct";
 dotenv.config();
 
 class PyTestRunnerStack extends TerraformStack {
@@ -20,7 +23,9 @@ class PyTestRunnerStack extends TerraformStack {
   async buildGcpLabEngineStack() {
     const projectId = process.env.PROJECTID!;
 
-    new GoogleProvider(this, "google", {});
+    const googleBetaProvider = new GoogleBetaProvider(this, "google", {
+      region: process.env.REGION!,
+    });
     const archiveProvider = new ArchiveProvider(this, "archive", {});
     const randomProvider = new RandomProvider(this, "random", {});
 
@@ -28,7 +33,7 @@ class PyTestRunnerStack extends TerraformStack {
       billingAccount: process.env.BillING_ACCOUNT!,
     });
 
-    const project = new Project(this, "project", {
+    const project = new GoogleProject(this, "project", {
       projectId: projectId,
       name: projectId,
       billingAccount: billingAccount.id,
@@ -50,11 +55,24 @@ class PyTestRunnerStack extends TerraformStack {
       functionName: "pytestrunner",
       runtime: "python311",
       entryPoint: "pytestrunner",
-      cloudFunctionDeploymentConstruct: cloudFunctionDeploymentConstruct,
+      makePublic: false,
+      cloudFunctionDeploymentConstruct: cloudFunctionDeploymentConstruct,      
+    });
+
+    const apigatewayConstruct = await ApigatewayConstruct.create(this, "api-gateway", {
+      api: "pytestrunnerapi",
+      project: project.projectId,
+      provider: googleBetaProvider,
+      url: cloudFunctionConstruct.cloudFunction.url,
+      servicesAccount: cloudFunctionConstruct.serviceAccount,
     });
 
     new TerraformOutput(this, "pytest-cloud-function-url", {
       value: cloudFunctionConstruct.cloudFunction.url,
+    });
+
+    new TerraformOutput(this, "api-url", {
+      value: apigatewayConstruct.gateway.defaultHostname,
     });
 
   }
