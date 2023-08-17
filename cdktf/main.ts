@@ -3,6 +3,7 @@ import { App, TerraformOutput, TerraformStack } from "cdktf";
 import { ArchiveProvider } from "./.gen/providers/archive/provider";
 import { RandomProvider } from "./.gen/providers/random/provider";
 import { DataGoogleBillingAccount } from "./.gen/providers/google-beta/data-google-billing-account";
+import { GoogleProjectIamMember } from "./.gen/providers/google-beta/google-project-iam-member";
 
 
 import { GoogleBetaProvider } from "./.gen/providers/google-beta/provider/index";
@@ -55,8 +56,16 @@ class PyTestRunnerStack extends TerraformStack {
       functionName: "pytestrunner",
       runtime: "python311",
       entryPoint: "pytestrunner",
+      timeout: 600,
+      availableMemory: "512Mi",
       makePublic: false,
-      cloudFunctionDeploymentConstruct: cloudFunctionDeploymentConstruct,      
+      cloudFunctionDeploymentConstruct: cloudFunctionDeploymentConstruct,
+    });
+
+    new GoogleProjectIamMember(this, "DatastoreProjectIamMember", {
+      project: project.projectId,
+      role: "roles/datastore.user",
+      member: "serviceAccount:" + cloudFunctionConstruct.serviceAccount.email,
     });
 
     const apigatewayConstruct = await ApigatewayConstruct.create(this, "api-gateway", {

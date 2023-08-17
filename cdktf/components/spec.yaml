@@ -1,3 +1,5 @@
+# Source Reference
+# https://beranger.medium.com/rate-limit-google-cloud-functions-with-api-gateway-19b54bb9d9e9
 swagger: '2.0'
 info:
   title: api-gateway
@@ -24,8 +26,8 @@ x-google-management:
 paths:
   /pytest:
     get:
-      summary: Run PyTest
-      operationId: pytest-v1
+      summary: Run PyTest (GET)
+      operationId: pytest-get-v1
       security:
         - api_key: []
       x-google-quota:
@@ -33,6 +35,7 @@ paths:
           pytest-smoothies-request: 1
       x-google-backend:
         address: {{URL}}
+        deadline: 300.0
       consumes:
         - application/json
       produces:
@@ -40,7 +43,24 @@ paths:
       responses:
         '200':
           description: OK
-
+    post:
+      summary: Run PyTest (POST)
+      operationId: pytest-post-v1
+      security:
+        - api_key: []
+      x-google-quota:
+        metricCosts:
+          pytest-smoothies-request: 1
+      x-google-backend:
+        address: {{URL}}
+        deadline: 300.0
+      consumes:
+        - application/json
+      produces:
+        - application/json        
+      responses:
+        '200':
+          description: OK
 
 securityDefinitions:
   api_key:

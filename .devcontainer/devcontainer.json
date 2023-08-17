@@ -1,5 +1,8 @@
 {
-  "image": "mcr.microsoft.com/devcontainers/universal:2",
+	"image": "mcr.microsoft.com/devcontainers/universal:2",
+	"hostRequirements": {
+		"cpus": 4
+	},
 	"features": {
 		"ghcr.io/devcontainers-contrib/features/terraform-asdf:2": {
 			"version": "latest"
@@ -7,10 +10,10 @@
 		"ghcr.io/devcontainers-contrib/features/typescript:2": {
 			"version": "latest"
 		},
-    "ghcr.io/devcontainers/features/python:1": {},
+		"ghcr.io/devcontainers/features/python:1": {},
 		"ghcr.io/dhoeric/features/google-cloud-cli:1": {}
 	},
-  "customizations": {
+	"customizations": {
 		"codespaces": {
 			"openFiles": []
 		},
@@ -30,10 +33,10 @@
 				"ms-python.pylint",
 				"ms-toolsai.jupyter",
 				"GitHub.copilot"
-			]      
+			]
 		},
 		"settings": {
 			"python.defaultInterpreterPath": "~/.python/current/bin/python3"
 		}
-	}  
+	}
 }

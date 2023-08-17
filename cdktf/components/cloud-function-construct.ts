@@ -44,8 +44,8 @@ export class CloudFunctionConstruct extends Construct {
     private async build(props: CloudFunctionConstructProps) {
 
         const options = {
-            folders: { exclude: ['.*', 'node_modules', 'test_coverage', "bin", "obj"] },
-            files: { include: ['*.js', '*.json', '*.cs', ".csproject"] },
+            folders: { exclude: ['.*', "bin", "obj"] },
+            files: { include: ['*.py', '*.txt', '*.zip'] },
         };
         const hash = await hashElement(path.resolve(__dirname, "..", "..", "functions", this.props.functionCode ?? this.props.functionName), options);
         const outputFileName = `function-source-${hash.hash}.zip`;
@@ -77,7 +77,9 @@ export class CloudFunctionConstruct extends Construct {
                 }
             },
             serviceConfig: {
-                maxInstanceCount: 1,
+                maxInstanceRequestConcurrency: 1,
+                maxInstanceCount: 100,
+                minInstanceCount: 0,
                 availableMemory: props.availableMemory ?? "128Mi",
                 timeoutSeconds: props.timeout ?? 60,
                 serviceAccountEmail: this.serviceAccount.email,

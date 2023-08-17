@@ -62,7 +62,7 @@ export class ApigatewayConstruct extends Construct {
                 {
                     document: {
                         path: "spec.yaml",
-                        contents: Fn.base64encode(fs.readFileSync(path.resolve(__dirname, "spec.yaml"), "utf8").replace("{{URL}}", props.url)),
+                        contents: Fn.base64encode(fs.readFileSync(path.resolve(__dirname, "spec.yaml"), "utf8").replaceAll("{{URL}}", props.url)),
                     }
                 },
             ],
@@ -86,13 +86,6 @@ export class ApigatewayConstruct extends Construct {
             provider: props.provider,
             dependsOn: services,
         });
-
-        new GoogleProjectService(this, `GatewayService`, {
-            project: props.project,
-            service: this.gateway.,
-            disableOnDestroy: false,
-        })
-
     }
 
     public static async create(scope: Construct, id: string, props: ApigatewayConstructProps) {

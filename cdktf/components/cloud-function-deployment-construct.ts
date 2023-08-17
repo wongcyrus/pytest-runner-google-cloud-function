@@ -32,6 +32,7 @@ export class CloudFunctionDeploymentConstruct extends Construct {
         "cloudbuild.googleapis.com",
         "eventarc.googleapis.com",
         "secretmanager.googleapis.com",
+        "logging.googleapis.com",
     ];
 
     constructor(scope: Construct, id: string, props: CloudFunctionDeploymentConstructProps) {
