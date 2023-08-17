@@ -1,3 +1,5 @@
+import datetime
+import json
 import os
 from pathlib import Path
 import shutil
@@ -8,8 +10,41 @@ from flask import escape
 
 import functions_framework
 from google.cloud import datastore
+from google.cloud.datastore.query import PropertyFilter, And
 
-datastore_client = datastore.Client()
+
+def get_student_id_by_api_key(key: str) -> str:
+    client = datastore.Client(project=os.environ.get('GCP_PROJECT'))
+    student = client.get(client.key('ApiKey', key))
+    return student['student_id']
+
+def save_completed_task(student_id: str, question:str, source_code:str) -> bool:
+    client = datastore.Client(project=os.environ.get('GCP_PROJECT'))
+    key = client.key('CompletedTask', student_id)
+    entity = datastore.Entity(key=key)
+    entity.update({
+        'student_id': student_id,
+        'question': question ,
+        'source_code':source_code,
+        'time': datetime.datetime.now() 
+    })
+    client.put(entity)
+
+
+def is_marked(student_id: str, question:str) -> bool:
+    client = datastore.Client(project=os.environ.get('GCP_PROJECT'))
+    query = client.query(kind="CompletedTask")
+    query.add_filter(
+               filter=And(
+                   [
+                       PropertyFilter("student_id", "=", student_id),
+                       PropertyFilter("question", "=", question)
+
+                   ]
+               )
+           )
+    results = list(query.fetch())
+    return len(results) == 1
 
 @functions_framework.http
 def pytestrunner(request):
@@ -28,7 +63,7 @@ def pytestrunner(request):
     key = request_args["key"]
     print(f"key: {key}")
 
-    student_id = lookup_api_key(key)
+    student_id = get_student_id_by_api_key(key)
     print(f"student_id: {student_id}")
 
     if request.method == "GET":
@@ -43,6 +78,12 @@ def pytestrunner(request):
     
     print(f"source_code_file_path: {source_code_file_path}")
     print(f"source_code: \n{source_code}")
+
+    question = source_code_file_path
+
+    if is_marked(student_id, question):
+        return 'Repeated Successful Test.', 200
+
     
     with tempfile.TemporaryDirectory() as tmpdirname:
         print(f"Created temporary directory: {tmpdirname}")
@@ -90,4 +131,17 @@ python -m pytest -v {test_code_file_path} --json-report --json-report-file={test
         print(test_result_text)
         shutil.rmtree(tmpdirname)
 
+        try:
+            test_result_json = json.loads(test_result_text)            
+            is_all_tests_passed = test_result_json["summary"]["passed"] / \
+                test_result_json["summary"]["total"] == 1
+            print(f"is_all_tests_passed: {is_all_tests_passed}")
+
+            if is_all_tests_passed:
+                save_completed_task(student_id, question, source_code)             
+                return "Test Success and saved the result.", 200
+     
+        except BaseException as ex:
+            print(f"Unexpected {ex=}, {type(ex)=}")
+            
     return test_result_text

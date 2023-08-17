@@ -3,8 +3,6 @@ import { App, TerraformOutput, TerraformStack } from "cdktf";
 import { ArchiveProvider } from "./.gen/providers/archive/provider";
 import { RandomProvider } from "./.gen/providers/random/provider";
 import { DataGoogleBillingAccount } from "./.gen/providers/google-beta/data-google-billing-account";
-import { GoogleProjectIamMember } from "./.gen/providers/google-beta/google-project-iam-member";
-
 
 import { GoogleBetaProvider } from "./.gen/providers/google-beta/provider/index";
 import { GoogleProject } from "./.gen/providers/google-beta/google-project";
@@ -13,6 +11,7 @@ import { CloudFunctionConstruct } from "./components/cloud-function-construct";
 
 import * as dotenv from 'dotenv';
 import { ApigatewayConstruct } from "./components/api-gateway-construct";
+import { DatastoreConstruct } from "./components/datastore-construct";
 dotenv.config();
 
 class PyTestRunnerStack extends TerraformStack {
@@ -62,10 +61,9 @@ class PyTestRunnerStack extends TerraformStack {
       cloudFunctionDeploymentConstruct: cloudFunctionDeploymentConstruct,
     });
 
-    new GoogleProjectIamMember(this, "DatastoreProjectIamMember", {
+    await DatastoreConstruct.create(this, "datastore", {
       project: project.projectId,
-      role: "roles/datastore.user",
-      member: "serviceAccount:" + cloudFunctionConstruct.serviceAccount.email,
+      servicesAccount: cloudFunctionConstruct.serviceAccount,
     });
 
     const apigatewayConstruct = await ApigatewayConstruct.create(this, "api-gateway", {
