@@ -34,7 +34,7 @@ paths:
         metricCosts:
           pytest-smoothies-request: 1
       x-google-backend:
-        address: {{URL}}
+        address: ${GRADER}
         deadline: 300.0
       consumes:
         - application/json
@@ -52,7 +52,7 @@ paths:
         metricCosts:
           pytest-smoothies-request: 1
       x-google-backend:
-        address: {{URL}}
+        address: ${GRADER}
         deadline: 300.0
       consumes:
         - application/json
@@ -61,6 +61,45 @@ paths:
       responses:
         '200':
           description: OK
+
+  /testresults:
+    get:
+      summary: PyTest Results (GET)
+      operationId: pytest-results-get-v1
+      security:
+        - api_key: []
+      x-google-quota:
+        metricCosts:
+          pytest-smoothies-request: 1
+      x-google-backend:
+        address: ${TEST_RESULTS}
+        deadline: 300.0
+      consumes:
+        - application/json
+      produces:
+        - application/json        
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: PyTest Results (POST)
+      operationId: pytest-results-post-v1
+      security:
+        - api_key: []
+      x-google-quota:
+        metricCosts:
+          pytest-smoothies-request: 1
+      x-google-backend:
+        address: ${TEST_RESULTS}
+        deadline: 300.0
+      consumes:
+        - application/json
+      produces:
+        - application/json        
+      responses:
+        '200':
+          description: OK
+
 
 securityDefinitions:
   api_key:

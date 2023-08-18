@@ -100,12 +100,12 @@ def restrict_api_key_api(project_id: str, service:str, key_id: str) -> Key:
 
 
 if __name__ == "__main__":
-    project_id = "pytest-runner"
-    api = "pytestrunnerapi-1l4kv4fc0t9cr.apigateway.pytest-runner.cloud.goog"
-    student_id = "1234567"
-    # key = create_api_key(project_id, "studentid-" + student_id ,"cywong@vtc.edu.hk")
-    # print(key)   
-    # response = restrict_api_key_api(project_id, api, key.uid)
-    # print(response) 
-    # add_api_key_to_datastore(project_id, key.key_string, student_id, key.uid)
- 
+    project_id = "pytest-runner1"
+    api = "pytestrunnerapi-1o1yioc1z41a1.apigateway.pytest-runner1.cloud.goog"
+    student_id = "123456789"
+    key = create_api_key(project_id, "studentid-" + student_id ,"cywong@vtc.edu.hk")
+    print(key)   
+    response = restrict_api_key_api(project_id, api, key.uid)
+    print(response) 
+    add_api_key_to_datastore(project_id, key.key_string, student_id, key.uid)
+    

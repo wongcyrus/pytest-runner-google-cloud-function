@@ -20,6 +20,7 @@ export interface CloudFunctionConstructProps {
     readonly environmentVariables?: { [key: string]: string };
     readonly eventTrigger?: GoogleCloudfunctions2FunctionEventTrigger;
     readonly makePublic?: boolean;
+    readonly serviceAccount?: GoogleServiceAccount;
 }
 
 export class CloudFunctionConstruct extends Construct {
@@ -32,11 +33,16 @@ export class CloudFunctionConstruct extends Construct {
         super(scope, id);
         let accountId = props.functionName + props.entryPoint.replace(/[^a-z0-9]/gi, '');
         accountId = accountId.substring(0, 27).toLowerCase();
-        this.serviceAccount = new GoogleServiceAccount(this, "service-account", {
-            accountId: accountId,
-            project: props.cloudFunctionDeploymentConstruct.project,
-            displayName: props.functionName + props.entryPoint ?? "",
-        });
+
+        if (props.serviceAccount) {
+            this.serviceAccount = props.serviceAccount;
+        } else {
+            this.serviceAccount = new GoogleServiceAccount(this, "service-account", {
+                accountId: accountId,
+                project: props.cloudFunctionDeploymentConstruct.project,
+                displayName: props.functionName + props.entryPoint ?? "",
+            });
+        }
         this.props = props;
         this.project = props.cloudFunctionDeploymentConstruct.project;
     }

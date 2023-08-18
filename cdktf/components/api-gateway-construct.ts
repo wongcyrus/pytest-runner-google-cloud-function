@@ -10,12 +10,10 @@ import { GoogleProjectService } from "../.gen/providers/google-beta/google-proje
 import { GoogleServiceAccount } from "../.gen/providers/google-beta/google-service-account";
 
 import path = require("path");
-import fs = require("fs");
-
 
 export interface ApigatewayConstructProps {
-    readonly api: string;
-    readonly url: string;
+    readonly api: string;    
+    readonly replaces: { [id: string]: string; };
     readonly project: string;
     readonly provider: GoogleBetaProvider;
     readonly servicesAccount: GoogleServiceAccount;
@@ -54,15 +52,13 @@ export class ApigatewayConstruct extends Construct {
             dependsOn: services,
         });
 
-        ;
-
         const apiConfig = new GoogleApiGatewayApiConfigA(this, "apiConfig", {
             api: apiGatewayApi.apiId,
             openapiDocuments: [
                 {
                     document: {
                         path: "spec.yaml",
-                        contents: Fn.base64encode(fs.readFileSync(path.resolve(__dirname, "spec.yaml"), "utf8").replaceAll("{{URL}}", props.url)),
+                        contents: Fn.base64encode(Fn.templatefile(path.resolve(__dirname, "spec.yaml"),props.replaces)),
                     }
                 },
             ],
@@ -80,6 +76,7 @@ export class ApigatewayConstruct extends Construct {
         })
 
         this.gateway = new GoogleApiGatewayGateway(this, "gateway", {
+            displayName:  props.project + "-gateway",
             gatewayId: "gateway",
             apiConfig: apiConfig.id,
             project: props.project,
