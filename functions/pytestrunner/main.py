@@ -9,7 +9,6 @@ from flask import escape
 
 import functions_framework
 from google.cloud import datastore
-from google.cloud.datastore.query import PropertyFilter, And
 
 
 def get_student_id_by_api_key(key: str) -> str:
