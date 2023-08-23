@@ -49,9 +49,9 @@ class PyTestRunnerStack extends TerraformStack {
       });
 
     //For the first deployment, it takes a while for API to be enabled.
-    await new Promise(r => setTimeout(r, 30000));
+    // await new Promise(r => setTimeout(r, 30000));
 
-    const cloudFunctionConstruct = await CloudFunctionConstruct.create(this, "pytestrunner", {
+    const pytestrunnerCloudFunctionConstruct = await CloudFunctionConstruct.create(this, "pytestrunnerCloudFunctionConstruct", {
       functionName: "pytestrunner",
       runtime: "python311",
       entryPoint: "pytestrunner",
@@ -61,31 +61,35 @@ class PyTestRunnerStack extends TerraformStack {
       cloudFunctionDeploymentConstruct: cloudFunctionDeploymentConstruct,
     });
 
-    await DatastoreConstruct.create(this, "datastore", {
+    await DatastoreConstruct.create(this, " pytestrunnerDatastore", {
       project: project.projectId,
-      servicesAccount: cloudFunctionConstruct.serviceAccount,
+      servicesAccount: pytestrunnerCloudFunctionConstruct.serviceAccount,
+    });
+
+    const testResultsCloudFunctionConstruct = await CloudFunctionConstruct.create(this, "testResultsCloudFunctionConstruct", {
+      functionName: "testresults",
+      runtime: "python311",
+      entryPoint: "testresults",
+      timeout: 600,
+      availableMemory: "512Mi",
+      makePublic: false,
+      cloudFunctionDeploymentConstruct: cloudFunctionDeploymentConstruct,
+      serviceAccount: pytestrunnerCloudFunctionConstruct.serviceAccount,
     });
 
     const apigatewayConstruct = await ApigatewayConstruct.create(this, "api-gateway", {
       api: "pytestrunnerapi",
       project: project.projectId,
       provider: googleBetaProvider,
-      url: cloudFunctionConstruct.cloudFunction.url,
-      servicesAccount: cloudFunctionConstruct.serviceAccount,
-    });
-
-    new TerraformOutput(this, "pytest-cloud-function-url", {
-      value: cloudFunctionConstruct.cloudFunction.url,
+      replaces: { "GRADER": pytestrunnerCloudFunctionConstruct.cloudFunction.url, "TEST_RESULTS": testResultsCloudFunctionConstruct.cloudFunction.url },
+      servicesAccount: pytestrunnerCloudFunctionConstruct.serviceAccount,
     });
 
     new TerraformOutput(this, "api-url", {
       value: apigatewayConstruct.gateway.defaultHostname,
     });
-
   }
 }
-
-
 
 async function buildStack(scope: Construct, id: string) {
   const stack = new PyTestRunnerStack(scope, id);

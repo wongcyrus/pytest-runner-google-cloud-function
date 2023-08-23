@@ -1,18 +1,17 @@
-import datetime
 from google.cloud import api_keys_v2
 from google.cloud.api_keys_v2 import Key
 
 from google.cloud import datastore
-from google.cloud.datastore.query import PropertyFilter, And
+from config import project_id, api
 
-
-def add_api_key_to_datastore(project_id: str,key: str, student_id:str,key_id:str) -> None:
+def add_api_key_to_datastore(project_id: str,key: str, student_id:str,key_id:str, name:str) -> None:
     client = datastore.Client(project=project_id)
     key = client.key('ApiKey', key)
     entity = datastore.Entity(key=key)
     entity.update({
         'student_id': student_id,
-        'key_id': key_id
+        'key_id': key_id,
+        'name'  : name
     })
     client.put(entity)
 
@@ -98,14 +97,36 @@ def restrict_api_key_api(project_id: str, service:str, key_id: str) -> Key:
     # Use response.key_string to authenticate.
     return response
 
+def get_students_from_excel() -> list:
+    from openpyxl import load_workbook
+    wb = load_workbook(filename = 'Namelist.xlsx')
+    sheet = wb.active
+    students = []
+    for row in sheet.iter_rows(min_row=2, max_col=2):
+        id =""
+        name = ""
+        for cell in row:            
+            if cell.column == 1:
+                id = cell.value
+            if cell.column == 2:
+                name = cell.value
+        students.append({"id":id,"name":name})
+    return students
 
-if __name__ == "__main__":
-    project_id = "pytest-runner"
-    api = "pytestrunnerapi-1l4kv4fc0t9cr.apigateway.pytest-runner.cloud.goog"
-    student_id = "1234567"
+
+if __name__ == "__main__":  
+    # student_id = "123456789"
     # key = create_api_key(project_id, "studentid-" + student_id ,"cywong@vtc.edu.hk")
     # print(key)   
     # response = restrict_api_key_api(project_id, api, key.uid)
     # print(response) 
     # add_api_key_to_datastore(project_id, key.key_string, student_id, key.uid)
- 
+
+    students = get_students_from_excel()
+    for student in students:
+        key = create_api_key(project_id, "studentid-" + student["id"] ,student["name"])
+        response = restrict_api_key_api(project_id, api, key.uid)
+        add_api_key_to_datastore(project_id, key.key_string, student["id"], key.uid, student["name"])        
+        print(key)
+                
+    
