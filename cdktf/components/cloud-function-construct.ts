@@ -92,6 +92,7 @@ export class CloudFunctionConstruct extends Construct {
                 environmentVariables: props.environmentVariables ?? {},
             },
             eventTrigger: props.eventTrigger,
+            dependsOn: props.cloudFunctionDeploymentConstruct.services
         });
 
         const member = props.makePublic ?? false ? "allUsers" : "serviceAccount:" + this.serviceAccount.email;
