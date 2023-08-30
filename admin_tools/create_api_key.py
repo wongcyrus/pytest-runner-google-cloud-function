@@ -134,9 +134,9 @@ if __name__ == "__main__":
     students = get_students_from_excel()
     for student in students:
         # if student["id"] in existing_student_ids skip it
-        if student["id"] in existing_student_ids:
+        if str(student["id"]) in existing_student_ids:
             continue
-        key = create_api_key(project_id, "studentid-" + student["id"] ,student["name"])
+        key = create_api_key(project_id, "studentid-" + str(student["id"]) ,student["name"])
         response = restrict_api_key_api(project_id, api, key.uid)
         add_api_key_to_datastore(project_id, key.key_string, student["id"], key.uid, student["name"])        
         print(key)
