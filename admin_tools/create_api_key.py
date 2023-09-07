@@ -129,12 +129,12 @@ if __name__ == "__main__":
     # add_api_key_to_datastore(project_id, key.key_string, student_id, key.uid)
 
     existing_keys = get_all_api_keys()   
-    existing_student_ids = list(map(lambda x: x["student_id"],existing_keys))    
+    existing_student_ids = list(map(lambda x: str(x["student_id"]),existing_keys))    
 
     students = get_students_from_excel()
     for student in students:
         # if student["id"] in existing_student_ids skip it
-        if str(student["id"]) in existing_student_ids:
+        if student["id"] is None or str(student["id"]) in existing_student_ids:
             continue
         key = create_api_key(project_id, "studentid-" + str(student["id"]) ,student["name"])
         response = restrict_api_key_api(project_id, api, key.uid)
