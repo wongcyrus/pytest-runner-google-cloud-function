@@ -58,7 +58,7 @@ class PyTestRunnerStack extends TerraformStack {
       timeout: 600,
       availableMemory: "512Mi",
       makePublic: false,
-      cloudFunctionDeploymentConstruct: cloudFunctionDeploymentConstruct,
+      cloudFunctionDeploymentConstruct: cloudFunctionDeploymentConstruct,      
     });
 
     await DatastoreConstruct.create(this, " pytestrunnerDatastore", {

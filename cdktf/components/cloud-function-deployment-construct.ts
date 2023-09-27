@@ -35,6 +35,8 @@ export class CloudFunctionDeploymentConstruct extends Construct {
         "logging.googleapis.com",
     ];
 
+    public readonly services: GoogleProjectService[];
+
     constructor(scope: Construct, id: string, props: CloudFunctionDeploymentConstructProps) {
         super(scope, id);
 
@@ -42,9 +44,9 @@ export class CloudFunctionDeploymentConstruct extends Construct {
         this.project = props.project;
         this.region = props.region;
 
-        const services = [];
+        this.services = [];
         for (const api of this.apis) {
-            services.push(new GoogleProjectService(this, `${api.replaceAll(".", "")}`, {
+            this.services.push(new GoogleProjectService(this, `${api.replaceAll(".", "")}`, {
                 project: props.project,
                 service: api,
                 disableOnDestroy: false,
@@ -72,7 +74,7 @@ export class CloudFunctionDeploymentConstruct extends Construct {
                     age: 1
                 }
             }],
-            dependsOn: services
+            dependsOn: this.services
         });
 
         // This is a hack to enable datastore API for the project
@@ -81,7 +83,7 @@ export class CloudFunctionDeploymentConstruct extends Construct {
             locationId: props.region,
             project: props.project,
             databaseType: "CLOUD_DATASTORE_COMPATIBILITY",
-            dependsOn: services
+            dependsOn: this.services
         });
     }
 }

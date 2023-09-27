@@ -113,6 +113,12 @@ def get_students_from_excel() -> list:
         students.append({"id":id,"name":name})
     return students
 
+def get_all_api_keys():
+    client = datastore.Client(project=project_id)
+    query = client.query(kind="ApiKey")
+    query.order = ["student_id"]
+    results = list(query.fetch())    
+    return results
 
 if __name__ == "__main__":  
     # student_id = "123456789"
@@ -122,11 +128,18 @@ if __name__ == "__main__":
     # print(response) 
     # add_api_key_to_datastore(project_id, key.key_string, student_id, key.uid)
 
+    existing_keys = get_all_api_keys()   
+    existing_student_ids = list(map(lambda x: str(x["student_id"]),existing_keys))    
+
     students = get_students_from_excel()
     for student in students:
-        key = create_api_key(project_id, "studentid-" + student["id"] ,student["name"])
+        # if student["id"] in existing_student_ids skip it
+        if student["id"] is None or str(student["id"]) in existing_student_ids:
+            continue
+        key = create_api_key(project_id, "studentid-" + str(student["id"]) ,student["name"])
         response = restrict_api_key_api(project_id, api, key.uid)
         add_api_key_to_datastore(project_id, key.key_string, student["id"], key.uid, student["name"])        
         print(key)
+    print("done")
                 
     
