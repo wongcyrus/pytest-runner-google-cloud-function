@@ -1,8 +1,5 @@
 import json
 import os
-
-from flask import escape
-
 import functions_framework
 from google.cloud import datastore
 from google.cloud.datastore.query import PropertyFilter
@@ -11,11 +8,11 @@ from google.cloud.datastore.query import PropertyFilter
 def get_student_id_by_api_key(key: str) -> str:
     client = datastore.Client(project=os.environ.get('GCP_PROJECT'))
     student = client.get(client.key('ApiKey', key))
-    return student['student_id']
+    return str(student['student_id'])
 
 
 def load_task(student_id: str) -> list:
-    client = datastore.Client("pytest-runner1")
+    client = datastore.Client(project=os.environ.get('GCP_PROJECT'))
     query = client.query(kind="CompletedTask")
     query.add_filter(filter=PropertyFilter(        
         property_name="student_id",

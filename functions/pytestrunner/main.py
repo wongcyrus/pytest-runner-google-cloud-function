@@ -5,7 +5,6 @@ import os
 from pathlib import Path
 import subprocess
 import zipfile
-from flask import escape
 
 import functions_framework
 from google.cloud import datastore
@@ -14,11 +13,11 @@ from google.cloud import datastore
 def get_student_id_by_api_key(key: str) -> str:
     client = datastore.Client(project=os.environ.get('GCP_PROJECT'))
     student = client.get(client.key('ApiKey', key))
-    return student['student_id']
+    return str(student['student_id'])
 
 def save_completed_task(student_id: str, question:str, source_code:str) -> bool:
     client = datastore.Client(project=os.environ.get('GCP_PROJECT'))
-    key = client.key('CompletedTask', student_id + "->" +question)
+    key = client.key('CompletedTask', student_id + "->" + str(question))
     entity = datastore.Entity(key=key)
     entity.update({
         'student_id': student_id,
@@ -31,7 +30,7 @@ def save_completed_task(student_id: str, question:str, source_code:str) -> bool:
 
 def is_marked(student_id: str, question:str) -> bool:
     client = datastore.Client(project=os.environ.get('GCP_PROJECT'))   
-    task = client.get(client.key('CompletedTask', student_id + "->" +question))
+    task = client.get(client.key('CompletedTask', student_id + "->" + str(question)))
     return task is not None
 
 @functions_framework.http
