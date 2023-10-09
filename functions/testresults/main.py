@@ -11,13 +11,18 @@ def get_student_id_by_api_key(key: str) -> str:
     return str(student['student_id'])
 
 
-def load_task(student_id: str) -> list:
+def load_task(student_id: str, is_project:bool) -> list:
     client = datastore.Client(project=os.environ.get('GCP_PROJECT'))
     query = client.query(kind="CompletedTask")
     query.add_filter(filter=PropertyFilter(        
         property_name="student_id",
         operator="=",
         value=student_id))
+    if is_project:
+        query.add_filter(filter=PropertyFilter(        
+            property_name="is_project",
+            operator="=",
+            value=True))
     results = query.fetch()
     results = list(map(lambda x: x["question"], results))
     results.sort()
@@ -38,8 +43,10 @@ def testresults(request):
     key = request_args["key"]
     print(f"key: {key}")
 
+    is_project = "is_project" in request.args
+
     student_id = get_student_id_by_api_key(key)
     print(f"student_id: {student_id}")
-    completed_tasks = load_task(student_id)   
+    completed_tasks = load_task(student_id, is_project)   
             
     return json.dumps(completed_tasks),200
