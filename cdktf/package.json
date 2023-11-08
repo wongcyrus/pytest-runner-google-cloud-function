@@ -20,7 +20,7 @@
     "node": ">=16.0"
   },
   "dependencies": {
-    "cdktf": "^0.17.3",
+    "cdktf": "^0.19.0",
     "constructs": "^10.2.69",
     "dotenv": "^16.0.3",
     "folder-hash": "^4.0.4"

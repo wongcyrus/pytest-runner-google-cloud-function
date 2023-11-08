@@ -63,10 +63,12 @@ def pytestrunner(request):
         source_code_file_path = request_args["sourceCodeFilePath"]
         source_code = request_args["sourceCode"] if "is_project" in request.args else None
         service_account_key = request_args["serviceAccountKey"]
+        assignment_id = request_args["assignmentId"]
     else:
         source_code_file_path = request_json["sourceCodeFilePath"]
         source_code = request_json["sourceCode"]
         service_account_key = request_json.get("serviceAccountKey")
+        assignment_id = request_json.get("assignmentId")
 
     if not source_code or not source_code_file_path:
         return '{ "error": "source_code and source_code_file_path must present." }', 422
@@ -81,8 +83,10 @@ def pytestrunner(request):
 
     root = path.dirname(path.abspath(__file__))
 
+    source = 'rehearsal.zip' if assignment_id is not None else "assignments.zip"
+
     zipped_pytest_code = path.join(path.dirname(
-        path.realpath(__file__)), 'assignments.zip' if service_account_key is None else "project.zip")
+        path.realpath(__file__)), source if service_account_key is None else "project.zip")
     print(f"zipped_pytest_code: {zipped_pytest_code}")
     with zipfile.ZipFile(zipped_pytest_code) as file:
         file.extractall(path=root)
