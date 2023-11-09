@@ -83,7 +83,7 @@ def pytestrunner(request):
 
     root = path.dirname(path.abspath(__file__))
 
-    source = 'rehearsal.zip' if assignment_id is not None else "assignments.zip"
+    source = (assignment_id + '.zip') if assignment_id is not None else "assignments.zip"
 
     zipped_pytest_code = path.join(path.dirname(
         path.realpath(__file__)), source if service_account_key is None else "project.zip")
