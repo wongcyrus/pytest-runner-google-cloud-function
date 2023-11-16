@@ -85,9 +85,18 @@ class PyTestRunnerStack extends TerraformStack {
       servicesAccount: pytestrunnerCloudFunctionConstruct.serviceAccount,
     });
 
+    new TerraformOutput(this, "project-id", {
+      value: project.projectId,
+    });
+
     new TerraformOutput(this, "api-url", {
       value: apigatewayConstruct.gateway.defaultHostname,
     });
+
+    new TerraformOutput(this, "service-name", {
+      value: apigatewayConstruct.apiGatewayApi.managedService,
+    });
+
   }
 }
 

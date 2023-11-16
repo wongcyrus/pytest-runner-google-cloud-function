@@ -29,6 +29,7 @@ export class ApigatewayConstruct extends Construct {
     prop: ApigatewayConstructProps;
 
     public gateway!: GoogleApiGatewayGateway;
+    public apiGatewayApi!: GoogleApiGatewayApi;
 
     private constructor(scope: Construct, id: string, props: ApigatewayConstructProps) {
         super(scope, id);
@@ -45,7 +46,7 @@ export class ApigatewayConstruct extends Construct {
                 disableOnDestroy: false,
             }));
         }
-        const apiGatewayApi = new GoogleApiGatewayApi(this, "api", {
+        this.apiGatewayApi = new GoogleApiGatewayApi(this, "api", {
             apiId: props.api,
             project: props.project,
             provider: props.provider,
@@ -53,7 +54,7 @@ export class ApigatewayConstruct extends Construct {
         });
 
         const apiConfig = new GoogleApiGatewayApiConfigA(this, "apiConfig", {
-            api: apiGatewayApi.apiId,
+            api: this.apiGatewayApi.apiId,
             openapiDocuments: [
                 {
                     document: {
