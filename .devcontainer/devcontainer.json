@@ -19,11 +19,7 @@
 		},
 		"vscode": {
 			"settings": {
-				"python.defaultInterpreterPath": "~/.python/current/bin/python3",			
-				"pylint.enabled": true,
-				"pylint.path": ["/usr/local/py-utils/bin/pylint"],
-				"flake8.enabled": true,
-				"flake8.path": ["/usr/local/py-utils/bin/flake8"]
+				"python.defaultInterpreterPath": "/usr/local/bin/python"
 			},
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
@@ -35,6 +31,12 @@
 				"ms-toolsai.jupyter",
 				"GitHub.copilot"
 			]
+		},
+		"settings": {
+			"python.defaultInterpreterPath": "/usr/local/bin/python",
+			"python.linting.enabled": true,
+			"python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
+			"python.linting.flake8Enabled": true
 		}
 	}
 }
