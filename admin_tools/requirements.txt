@@ -1,6 +1,6 @@
 google
 google-cloud
 google-cloud-api-keys
-google-cloud-datastore
+google-cloud-firestore
 google-api-python-client
 openpyxl

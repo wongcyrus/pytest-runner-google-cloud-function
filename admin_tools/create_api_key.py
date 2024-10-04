@@ -1,19 +1,24 @@
 from google.cloud import api_keys_v2
 from google.cloud.api_keys_v2 import Key
 
-from google.cloud import datastore
+from google.cloud import firestore
 from config import project_id, api
 
-def add_api_key_to_datastore(project_id: str,key: str, student_id:str,key_id:str, name:str) -> None:
-    client = datastore.Client(project=project_id)
-    key = client.key('ApiKey', key)
-    entity = datastore.Entity(key=key)
-    entity.update({
+def get_all_api_keys():
+    db = firestore.Client(project=project_id,database="pytestrunner")
+    api_keys_ref = db.collection('ApiKey')
+    query = api_keys_ref.order_by('student_id')
+    results = [doc.to_dict() for doc in query.stream()]
+    return results
+
+def add_api_key_to_firestore(project_id: str, key: str, student_id: str, key_id: str, name: str) -> None:
+    db = firestore.Client(project=project_id,database="pytestrunner")
+    api_key_ref = db.collection('ApiKey').document(key)
+    api_key_ref.set({
         'student_id': student_id,
         'key_id': key_id,
-        'name'  : name
+        'name': name
     })
-    client.put(entity)
 
 def create_api_key(project_id: str, id:str,name: str) -> Key:
     """
@@ -113,12 +118,7 @@ def get_students_from_excel() -> list:
         students.append({"id":id,"name":name})
     return students
 
-def get_all_api_keys():
-    client = datastore.Client(project=project_id)
-    query = client.query(kind="ApiKey")
-    query.order = ["student_id"]
-    results = list(query.fetch())    
-    return results
+
 
 if __name__ == "__main__":  
     # student_id = "123456789"
@@ -138,7 +138,7 @@ if __name__ == "__main__":
             continue
         key = create_api_key(project_id, "studentid-" + str(student["id"]) ,student["name"])
         response = restrict_api_key_api(project_id, api, key.uid)
-        add_api_key_to_datastore(project_id, key.key_string, student["id"], key.uid, student["name"])        
+        add_api_key_to_firestore(project_id, key.key_string, student["id"], key.uid, student["name"])        
         print(key)
     print("done")
                 
