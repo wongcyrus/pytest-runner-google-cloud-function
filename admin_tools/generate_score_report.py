@@ -13,15 +13,16 @@ def get_all_api_keys():
     return results
 
 def completed_task(student_id: str) -> list:
-    client = datastore.Client("pytest-runner1")
+    client = datastore.Client(project=project_id)
     query = client.query(kind="CompletedTask")
     query.add_filter(filter=PropertyFilter(        
         property_name="student_id",
         operator="=",
-        value=student_id))
+        value=str(student_id)))
     results = query.fetch()
     results = list(map(lambda x: x["question"], results))
     results.sort()
+    print(f"Student {student_id} has completed {len(results)} tasks.")
     return list(results)
 
 def save_to_xlsx(student_task:dict, all_tasks:list):
