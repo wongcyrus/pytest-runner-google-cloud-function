@@ -2,7 +2,6 @@ import { Construct } from "constructs";
 import { GoogleProjectIamMember } from "../.gen/providers/google-beta/google-project-iam-member";
 import { GoogleServiceAccount } from "../.gen/providers/google-beta/google-service-account";
 import { GoogleProjectService } from "../.gen/providers/google-beta/google-project-service";
-// import { GoogleFirestoreIndex } from "../.gen/providers/google-beta/google-firestore-index";
 import { GoogleFirestoreDatabase } from "../.gen/providers/google-beta/google-firestore-database";
 
 export interface FirestoreConstructProps {
