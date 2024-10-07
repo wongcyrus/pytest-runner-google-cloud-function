@@ -116,7 +116,8 @@ def pytestrunner(request):
 
     test_result_text = os.path.join(root, 'result.json')
 
-    cmd = f"""PREFIX=www STUDENT_ID={student_id} python -m pytest -v {test_code_file_path} --json-report --json-report-file={test_result_text}"""
+    PREFIX = os.environ.get("PREFIX", "")
+    cmd = f"""PREFIX={PREFIX} STUDENT_ID={student_id} python -m pytest -v {test_code_file_path} --json-report --json-report-file={test_result_text}"""
     print(cmd)
     test_result = subprocess.getoutput(cmd)
     print(test_result)
