@@ -64,11 +64,6 @@ class PyTestRunnerStack extends TerraformStack {
       },
     });
 
-    // await DatastoreConstruct.create(this, " pytestrunnerDatastore", {
-    //   project: project.projectId,
-    //   servicesAccount: pytestrunnerCloudFunctionConstruct.serviceAccount,
-    // });
-
     await FirestoreConstruct.create(this, " pytestrunnerDatastore", {
       project: project.projectId,
       servicesAccount: pytestrunnerCloudFunctionConstruct.serviceAccount,

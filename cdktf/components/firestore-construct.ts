@@ -37,46 +37,6 @@ export class FirestoreConstruct extends Construct {
             deletionPolicy: "DELETE",
             dependsOn: services,
         });
-
-        
-      
-        // new GoogleFirestoreIndex(this, "google_datastore_index_user", {
-        //     project: props.project,
-        //     database: googleFirestoreDatabase.name,
-        //     collection: "Usage",
-        //     fields: [
-        //         {
-        //             fieldPath: "user_id",
-        //             order: "ASCENDING",
-        //         },
-        //         {
-        //             fieldPath: "time",
-        //             order: "ASCENDING",
-        //         },
-        //         {
-        //             fieldPath: "__name__",
-        //             order: "ASCENDING",
-        //         },
-        //     ],
-        //     dependsOn: services,
-        // });
-
-        // new GoogleFirestoreIndex(this, "google_datastore_index_region", {
-        //     project: props.project,
-        //     database: googleFirestoreDatabase.name,
-        //     collection: "Usage",
-        //     fields: [
-        //         {
-        //             fieldPath: "model_region",
-        //             order: "ASCENDING",
-        //         },
-        //         {
-        //             fieldPath: "time",
-        //             order: "ASCENDING",
-        //         }
-        //     ],
-        //     dependsOn: services,
-        // });
     }
 
     private async build(props: FirestoreConstructProps) {
