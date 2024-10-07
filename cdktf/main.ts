@@ -11,7 +11,7 @@ import { CloudFunctionConstruct } from "./components/cloud-function-construct";
 
 import * as dotenv from 'dotenv';
 import { ApigatewayConstruct } from "./components/api-gateway-construct";
-import { DatastoreConstruct } from "./components/datastore-construct";
+import { FirestoreConstruct } from "./components/firestore-construct";
 dotenv.config();
 
 class PyTestRunnerStack extends TerraformStack {
@@ -37,7 +37,7 @@ class PyTestRunnerStack extends TerraformStack {
       projectId: projectId,
       name: projectId,
       billingAccount: billingAccount.id,
-      skipDelete: false
+      deletionPolicy: "DELETE",
     });
 
     const cloudFunctionDeploymentConstruct =
@@ -59,9 +59,12 @@ class PyTestRunnerStack extends TerraformStack {
       availableMemory: "512Mi",
       makePublic: false,
       cloudFunctionDeploymentConstruct: cloudFunctionDeploymentConstruct,      
+      environmentVariables: {      
+        "PREFIX": process.env.PREFIX!,      
+      },
     });
 
-    await DatastoreConstruct.create(this, " pytestrunnerDatastore", {
+    await FirestoreConstruct.create(this, " pytestrunnerDatastore", {
       project: project.projectId,
       servicesAccount: pytestrunnerCloudFunctionConstruct.serviceAccount,
     });

@@ -4,38 +4,41 @@ import os
 import subprocess
 import zipfile
 
-from google.cloud import datastore
 from os import path
 from pathlib import Path
+from google.cloud import firestore
 
 import functions_framework
 
-
 def get_student_id_by_api_key(key: str) -> str:
-    client = datastore.Client(project=os.environ.get('GCP_PROJECT'))
-    student = client.get(client.key('ApiKey', key))
-    return str(student['student_id'])
-
+    db = firestore.Client(database="pytestrunner")
+    doc_ref = db.collection('ApiKey').document(key)
+    doc = doc_ref.get()
+    if doc.exists:
+        return str(doc.to_dict()['student_id'])
+    else:
+        raise ValueError("API key not found")
 
 def save_completed_task(student_id: str, question: str, source_code: str, is_project: bool) -> bool:
-    client = datastore.Client(project=os.environ.get('GCP_PROJECT'))
-    key = client.key('CompletedTask', student_id + "->" + str(question))
+    db = firestore.Client(database="pytestrunner")
+    doc_ref = db.collection('CompletedTask').document(student_id + "->" + str(question).replace('/', '_'))
     
-    entity = datastore.Entity(key=key)
-    entity.update({
+    data = {
         'student_id': student_id,
         'question': question,
         'source_code': source_code.encode('utf-8')[:1500].decode('utf-8', 'ignore'),
         'is_project': is_project,
         'time': datetime.datetime.now()
-    })
-    client.put(entity)
+    }
+    doc_ref.set(data)
+    return True
 
 
 def is_marked(student_id: str, question: str) -> bool:
-    client = datastore.Client(project=os.environ.get('GCP_PROJECT'))
-    task = client.get(client.key('CompletedTask', student_id + "->" + str(question)))
-    return task is not None
+    db = firestore.Client(database="pytestrunner")
+    doc_ref = db.collection('CompletedTask').document(student_id + "->" + str(question).replace('/', '_'))
+    doc = doc_ref.get()
+    return doc.exists
 
 
 @functions_framework.http
@@ -113,7 +116,8 @@ def pytestrunner(request):
 
     test_result_text = os.path.join(root, 'result.json')
 
-    cmd = f"""PREFIX=gcf STUDENT_ID={student_id} python -m pytest -v {test_code_file_path} --json-report --json-report-file={test_result_text}"""
+    PREFIX = os.environ.get("PREFIX", "")
+    cmd = f"""PREFIX={PREFIX} STUDENT_ID={student_id} python -m pytest -v {test_code_file_path} --json-report --json-report-file={test_result_text}"""
     print(cmd)
     test_result = subprocess.getoutput(cmd)
     print(test_result)

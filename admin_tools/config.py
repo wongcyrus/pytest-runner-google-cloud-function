@@ -1,2 +1,2 @@
-project_id="pytest-runner-pt"
-api="pytestrunnerapi-0f9cddyffrgbo.apigateway.pytest-runner-pt.cloud.goog"
+project_id="pytest-runner-2425-project"
+api="pytestrunnerapi-063fmw1k2y5oz.apigateway.pytest-runner-2425-project.cloud.goog"

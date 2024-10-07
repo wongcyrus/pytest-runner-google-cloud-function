@@ -1,32 +1,25 @@
 import json
-import os
 import functions_framework
-from google.cloud import datastore
-from google.cloud.datastore.query import PropertyFilter
-
+from google.cloud import firestore
 
 def get_student_id_by_api_key(key: str) -> str:
-    client = datastore.Client(project=os.environ.get('GCP_PROJECT'))
-    student = client.get(client.key('ApiKey', key))
-    return str(student['student_id'])
+    client = firestore.Client(database="pytestrunner")
+    doc_ref = client.collection('ApiKey').document(key)
+    doc = doc_ref.get()
+    if doc.exists:
+        return str(doc.to_dict()['student_id'])
+    else:
+        raise ValueError("API key not found")
 
-
-def load_task(student_id: str, is_project:bool) -> list:
-    client = datastore.Client(project=os.environ.get('GCP_PROJECT'))
-    query = client.query(kind="CompletedTask")
-    query.add_filter(filter=PropertyFilter(        
-        property_name="student_id",
-        operator="=",
-        value=student_id))
+def load_task(student_id: str, is_project: bool) -> list:
+    client = firestore.Client(database="pytestrunner")
+    query = client.collection('CompletedTask').where('student_id', '==', student_id)
     if is_project:
-        query.add_filter(filter=PropertyFilter(        
-            property_name="is_project",
-            operator="=",
-            value=True))
-    results = query.fetch()
-    results = list(map(lambda x: x["question"], results))
+        query = query.where('is_project', '==', True)
+    results = query.stream()
+    results = [doc.to_dict()["question"] for doc in results]
     results.sort()
-    return list(results)
+    return results
 
 @functions_framework.http
 def testresults(request):
