@@ -2,3 +2,4 @@ venv
 Namelist.xlsx
 api_keys.xlsx
 scores.xlsx
+__pycache__/**

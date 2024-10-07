@@ -1,32 +1,27 @@
-from google.cloud import datastore
-from google.cloud.datastore.query import PropertyFilter
+from google.cloud import firestore
 from config import project_id
 import os
 from openpyxl import Workbook
 
 def get_all_api_keys():
-    client = datastore.Client(project=project_id)
-    query = client.query(kind="ApiKey")
-    query.order = ["student_id"]
-    results = list(query.fetch())
+    db = firestore.Client(project=project_id,database="pytestrunner")
+    api_keys_ref = db.collection("ApiKey")
+    api_keys = api_keys_ref.order_by("student_id").stream()
+    results = [api_key.to_dict() for api_key in api_keys]
     
     return results
 
 def completed_task(student_id: str) -> list:
-    client = datastore.Client(project=project_id)
-    query = client.query(kind="CompletedTask")
-    query.add_filter(filter=PropertyFilter(        
-        property_name="student_id",
-        operator="=",
-        value=str(student_id)))
-    results = query.fetch()
-    results = list(map(lambda x: x["question"], results))
+    db = firestore.Client(project=project_id,database="pytestrunner")
+    completed_tasks_ref = db.collection("CompletedTask")
+    query = completed_tasks_ref.where("student_id", "==", str(student_id))
+    results = query.stream()
+    results = [task.to_dict()["question"] for task in results]
     results.sort()
     print(f"Student {student_id} has completed {len(results)} tasks.")
-    return list(results)
+    return results
 
-def save_to_xlsx(student_task:dict, all_tasks:list):
-    from openpyxl import Workbook
+def save_to_xlsx(student_task:dict, all_tasks:list):    
     wb = Workbook()
     ws = wb.active
     header = ["id","score"]
