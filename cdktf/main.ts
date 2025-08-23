@@ -12,6 +12,8 @@ import { CloudFunctionConstruct } from "./components/cloud-function-construct";
 import * as dotenv from 'dotenv';
 import { ApigatewayConstruct } from "./components/api-gateway-construct";
 import { FirestoreConstruct } from "./components/firestore-construct";
+import { GoogleProjectIamMember } from "./.gen/providers/google-beta/google-project-iam-member";
+import { DataGoogleProject } from "./.gen/providers/google-beta/data-google-project";
 dotenv.config();
 
 class PyTestRunnerStack extends TerraformStack {
@@ -86,6 +88,18 @@ class PyTestRunnerStack extends TerraformStack {
       provider: googleBetaProvider,
       replaces: { "GRADER": pytestrunnerCloudFunctionConstruct.cloudFunction.url, "TEST_RESULTS": testResultsCloudFunctionConstruct.cloudFunction.url },
       servicesAccount: pytestrunnerCloudFunctionConstruct.serviceAccount,
+    });
+
+    // Retrieve project details to get project number
+    const projectData = new DataGoogleProject(this, "project-data", {
+      projectId: projectId,
+    });
+
+    // Grant Artifact Registry Reader role to Cloud Functions service agent
+    new GoogleProjectIamMember(this, "cloud-functions-artifact-registry-reader", {
+      project: projectId,
+      role: "roles/artifactregistry.reader",
+      member: `serviceAccount:service-${projectData.number}@gcf-admin-robot.iam.gserviceaccount.com`,
     });
 
     new TerraformOutput(this, "project-id", {

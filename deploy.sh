@@ -1,5 +1,5 @@
 cd cdktf
-npm install --global cdktf-cli@latest
+npm install cdktf-cli@latest
 npm i
-cdktf get
-cdktf deploy --auto-approve
+npx cdktf get
+npx cdktf deploy --auto-approve
