@@ -49,6 +49,16 @@ class PyTestRunnerStack extends TerraformStack {
         randomProvider: randomProvider,
       });
 
+    // Grant Artifact Registry Reader role to Cloud Functions service agent
+    // This must be created AFTER APIs are enabled (so service account exists)
+    // but BEFORE Cloud Functions are deployed (so they can use Artifact Registry during build)
+    const artifactRegistryIamMember = new GoogleProjectIamMember(this, "cloud-functions-artifact-registry-reader", {
+      project: projectId,
+      role: "roles/artifactregistry.reader",
+      member: `serviceAccount:service-${project.number}@gcf-admin-robot.iam.gserviceaccount.com`,
+      dependsOn: cloudFunctionDeploymentConstruct.services,
+    });
+
     //For the first deployment, it takes a while for API to be enabled.
     // await new Promise(r => setTimeout(r, 30000));
 
@@ -63,6 +73,7 @@ class PyTestRunnerStack extends TerraformStack {
       environmentVariables: {      
         "PREFIX": process.env.PREFIX!,      
       },
+      additionalDependencies: [artifactRegistryIamMember],
     });
 
     await FirestoreConstruct.create(this, " pytestrunnerDatastore", {
@@ -79,6 +90,7 @@ class PyTestRunnerStack extends TerraformStack {
       makePublic: false,
       cloudFunctionDeploymentConstruct: cloudFunctionDeploymentConstruct,
       serviceAccount: pytestrunnerCloudFunctionConstruct.serviceAccount,
+      additionalDependencies: [artifactRegistryIamMember],
     });
 
     const apigatewayConstruct = await ApigatewayConstruct.create(this, "api-gateway", {
@@ -87,14 +99,6 @@ class PyTestRunnerStack extends TerraformStack {
       provider: googleBetaProvider,
       replaces: { "GRADER": pytestrunnerCloudFunctionConstruct.cloudFunction.url, "TEST_RESULTS": testResultsCloudFunctionConstruct.cloudFunction.url },
       servicesAccount: pytestrunnerCloudFunctionConstruct.serviceAccount,
-    });
-
-    // Grant Artifact Registry Reader role to Cloud Functions service agent
-    new GoogleProjectIamMember(this, "cloud-functions-artifact-registry-reader", {
-      project: projectId,
-      role: "roles/artifactregistry.reader",
-      // Use the project number from the google_project resource created above, avoiding a data source
-      member: `serviceAccount:service-${project.number}@gcf-admin-robot.iam.gserviceaccount.com`,
     });
 
     new TerraformOutput(this, "project-id", {

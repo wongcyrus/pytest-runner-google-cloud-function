@@ -54,7 +54,7 @@ export class CloudFunctionDeploymentConstruct extends Construct {
         }
 
         const bucketSuffix = new StringResource(this, "bucketPrefix", {
-            length: 8,
+            length: 9,
             special: false,
             upper: false,
         })

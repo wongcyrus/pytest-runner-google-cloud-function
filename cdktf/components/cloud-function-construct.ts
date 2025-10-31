@@ -21,6 +21,7 @@ export interface CloudFunctionConstructProps {
     readonly eventTrigger?: GoogleCloudfunctions2FunctionEventTrigger;
     readonly makePublic?: boolean;
     readonly serviceAccount?: GoogleServiceAccount;
+    readonly additionalDependencies?: any[];
 }
 
 export class CloudFunctionConstruct extends Construct {
@@ -68,6 +69,11 @@ export class CloudFunctionConstruct extends Construct {
         });
 
 
+        const dependencies = [...props.cloudFunctionDeploymentConstruct.services];
+        if (props.additionalDependencies) {
+            dependencies.push(...props.additionalDependencies);
+        }
+
         this.cloudFunction = new GoogleCloudfunctions2Function(this, "cloud-function", {
             name: this.props.functionName.toLowerCase(),
             project: this.props.cloudFunctionDeploymentConstruct.project,
@@ -92,7 +98,7 @@ export class CloudFunctionConstruct extends Construct {
                 environmentVariables: props.environmentVariables ?? {},
             },
             eventTrigger: props.eventTrigger,
-            dependsOn: props.cloudFunctionDeploymentConstruct.services
+            dependsOn: dependencies
         });
 
         const member = props.makePublic ?? false ? "allUsers" : "serviceAccount:" + this.serviceAccount.email;
