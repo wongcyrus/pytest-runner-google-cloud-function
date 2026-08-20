@@ -1,5 +1,5 @@
 import { Construct } from "constructs";
-import { App, TerraformOutput, TerraformStack } from "cdktf";
+import { App, TerraformOutput, TerraformStack } from "cdktn";
 import { ArchiveProvider } from "./.gen/providers/archive/provider";
 import { RandomProvider } from "./.gen/providers/random/provider";
 import { DataGoogleBillingAccount } from "./.gen/providers/google-beta/data-google-billing-account";
@@ -13,6 +13,7 @@ import * as dotenv from 'dotenv';
 import { ApigatewayConstruct } from "./components/api-gateway-construct";
 import { FirestoreConstruct } from "./components/firestore-construct";
 import { GoogleProjectIamMember } from "./.gen/providers/google-beta/google-project-iam-member";
+import { GoogleProjectServiceIdentity } from "./.gen/providers/google-beta/google-project-service-identity";
 dotenv.config();
 
 class PyTestRunnerStack extends TerraformStack {
@@ -49,14 +50,29 @@ class PyTestRunnerStack extends TerraformStack {
         randomProvider: randomProvider,
       });
 
+    // Synchronously request GCP to create Cloud Functions and Cloud Build managed service identities
+    const gcfServiceIdentity = new GoogleProjectServiceIdentity(this, "gcf-service-identity", {
+      project: projectId,
+      service: "cloudfunctions.googleapis.com",
+      provider: googleBetaProvider,
+      dependsOn: cloudFunctionDeploymentConstruct.services,
+    });
+
+    const cloudBuildServiceIdentity = new GoogleProjectServiceIdentity(this, "cloudbuild-service-identity", {
+      project: projectId,
+      service: "cloudbuild.googleapis.com",
+      provider: googleBetaProvider,
+      dependsOn: cloudFunctionDeploymentConstruct.services,
+    });
+
     // Grant Artifact Registry Reader role to Cloud Functions service agent
-    // This must be created AFTER APIs are enabled (so service account exists)
-    // but BEFORE Cloud Functions are deployed (so they can use Artifact Registry during build)
+    // Using gcfServiceIdentity guarantees the service account is created by GCP before assigning the role
     const artifactRegistryIamMember = new GoogleProjectIamMember(this, "cloud-functions-artifact-registry-reader", {
       project: projectId,
       role: "roles/artifactregistry.reader",
-      member: `serviceAccount:service-${project.number}@gcf-admin-robot.iam.gserviceaccount.com`,
-      dependsOn: cloudFunctionDeploymentConstruct.services,
+      member: gcfServiceIdentity.member,
+      provider: googleBetaProvider,
+      dependsOn: [gcfServiceIdentity, cloudBuildServiceIdentity],
     });
 
     //For the first deployment, it takes a while for API to be enabled.
@@ -90,7 +106,7 @@ class PyTestRunnerStack extends TerraformStack {
       makePublic: false,
       cloudFunctionDeploymentConstruct: cloudFunctionDeploymentConstruct,
       serviceAccount: pytestrunnerCloudFunctionConstruct.serviceAccount,
-      additionalDependencies: [artifactRegistryIamMember],
+      additionalDependencies: [artifactRegistryIamMember, pytestrunnerCloudFunctionConstruct.cloudFunction],
     });
 
     const apigatewayConstruct = await ApigatewayConstruct.create(this, "api-gateway", {

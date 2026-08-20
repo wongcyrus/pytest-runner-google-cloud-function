@@ -4,7 +4,7 @@ import { GoogleApiGatewayGateway } from "../.gen/providers/google-beta/google-ap
 import { GoogleApiGatewayApi } from "../.gen/providers/google-beta/google-api-gateway-api";
 import { GoogleApiGatewayApiConfigA } from "../.gen/providers/google-beta/google-api-gateway-api-config";
 
-import { Fn } from "cdktf";
+import { Fn } from "cdktn";
 import { GoogleBetaProvider } from "../.gen/providers/google-beta/provider";
 import { GoogleProjectService } from "../.gen/providers/google-beta/google-project-service";
 import { GoogleServiceAccount } from "../.gen/providers/google-beta/google-service-account";

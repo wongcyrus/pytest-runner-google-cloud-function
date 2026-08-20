@@ -59,7 +59,7 @@ export class CloudFunctionConstruct extends Construct {
         const code = new DataArchiveFile(this, "archiveFile", {
             type: "zip",
             sourceDir: path.resolve(__dirname, "..", "..", "functions", this.props.functionCode ?? this.props.functionName),
-            outputPath: path.resolve(__dirname, "..", "cdktf.out", "functions", outputFileName)
+            outputPath: path.resolve(__dirname, "..", "cdktn.out", "functions", outputFileName)
         });
 
         const storageBucketObject = new GoogleStorageBucketObject(this, "storage-bucket-object", {
