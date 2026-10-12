@@ -52,7 +52,7 @@ export class CloudFunctionConstruct extends Construct {
 
         const options = {
             folders: { exclude: ['.*', "bin", "obj"] },
-            files: { include: ['*.py', '*.txt', '*.zip'] },
+            files: { include: ['*.py', '*.txt', '*.zip', '*.xlsx', '*.json'] },
         };
         const hash = await hashElement(path.resolve(__dirname, "..", "..", "functions", this.props.functionCode ?? this.props.functionName), options);
         const outputFileName = `function-source-${hash.hash}.zip`;

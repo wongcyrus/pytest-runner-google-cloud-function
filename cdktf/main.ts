@@ -9,9 +9,13 @@ import { GoogleProject } from "./.gen/providers/google-beta/google-project";
 import { CloudFunctionDeploymentConstruct } from "./components/cloud-function-deployment-construct";
 import { CloudFunctionConstruct } from "./components/cloud-function-construct";
 
+import * as fs from 'fs';
+import * as path from 'path';
 import * as dotenv from 'dotenv';
 import { ApigatewayConstruct } from "./components/api-gateway-construct";
 import { FirestoreConstruct } from "./components/firestore-construct";
+import { WebsiteBucketConstruct } from "./components/website-bucket-construct";
+import { DailySchedulerConstruct } from "./components/scheduler-construct";
 import { GoogleProjectIamMember } from "./.gen/providers/google-beta/google-project-iam-member";
 import { GoogleProjectServiceIdentity } from "./.gen/providers/google-beta/google-project-service-identity";
 dotenv.config();
@@ -109,6 +113,50 @@ class PyTestRunnerStack extends TerraformStack {
       additionalDependencies: [artifactRegistryIamMember, pytestrunnerCloudFunctionConstruct.cloudFunction],
     });
 
+    const websiteBucketConstruct = new WebsiteBucketConstruct(this, "websiteBucketConstruct", {
+      project: project.projectId,
+      region: process.env.REGION!,
+      functionServiceAccount: pytestrunnerCloudFunctionConstruct.serviceAccount,
+      dependsOn: cloudFunctionDeploymentConstruct.services,
+    });
+
+    // Automatically sync Namelist.xlsx from admin_tools to functions/scorereport before packaging
+    const namelistSource = path.resolve(__dirname, "..", "admin_tools", "Namelist.xlsx");
+    const namelistDestDir = path.resolve(__dirname, "..", "functions", "scorereport");
+    const namelistDest = path.join(namelistDestDir, "Namelist.xlsx");
+    if (fs.existsSync(namelistSource)) {
+      fs.mkdirSync(namelistDestDir, { recursive: true });
+      fs.copyFileSync(namelistSource, namelistDest);
+      console.log(`[CDKTF] Synced Namelist.xlsx from admin_tools to functions/scorereport`);
+    } else {
+      console.warn(`[CDKTF] Warning: ${namelistSource} not found. Ensure Namelist.xlsx is present in admin_tools.`);
+    }
+
+    const scoreReportCloudFunctionConstruct = await CloudFunctionConstruct.create(this, "scoreReportCloudFunctionConstruct", {
+      functionName: "scorereport",
+      runtime: "python311",
+      entryPoint: "scorereport",
+      timeout: 600,
+      availableMemory: "512Mi",
+      makePublic: false,
+      cloudFunctionDeploymentConstruct: cloudFunctionDeploymentConstruct,
+      serviceAccount: pytestrunnerCloudFunctionConstruct.serviceAccount,
+      environmentVariables: {
+        "REPORT_BUCKET": websiteBucketConstruct.bucket.name,
+      },
+      additionalDependencies: [artifactRegistryIamMember, websiteBucketConstruct.bucket],
+    });
+
+    new DailySchedulerConstruct(this, "dailyScoreReportScheduler", {
+      name: "daily-score-report-job",
+      project: project.projectId,
+      region: process.env.REGION!,
+      schedule: "0 0 * * *",
+      targetUri: scoreReportCloudFunctionConstruct.cloudFunction.url,
+      serviceAccount: pytestrunnerCloudFunctionConstruct.serviceAccount,
+      dependsOn: [scoreReportCloudFunctionConstruct.cloudFunction],
+    });
+
     const apigatewayConstruct = await ApigatewayConstruct.create(this, "api-gateway", {
       api: "pytestrunnerapi",
       project: project.projectId,
@@ -127,6 +175,14 @@ class PyTestRunnerStack extends TerraformStack {
 
     new TerraformOutput(this, "service-name", {
       value: apigatewayConstruct.apiGatewayApi.managedService,
+    });
+
+    new TerraformOutput(this, "report-website-url", {
+      value: `https://storage.googleapis.com/${websiteBucketConstruct.bucket.name}/index.html`,
+    });
+
+    new TerraformOutput(this, "report-function-url", {
+      value: scoreReportCloudFunctionConstruct.cloudFunction.url,
     });
 
   }

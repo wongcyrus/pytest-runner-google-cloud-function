@@ -33,6 +33,7 @@ export class CloudFunctionDeploymentConstruct extends Construct {
         "eventarc.googleapis.com",
         "secretmanager.googleapis.com",
         "logging.googleapis.com",
+        "cloudscheduler.googleapis.com",
     ];
 
     public readonly services: GoogleProjectService[];

@@ -1,4 +1,13 @@
+"""Look up a key with `python check_api_key.py KEY` or GOOGLE_API_KEY.
 
+Install requirements.txt and configure Application Default Credentials with
+`gcloud auth application-default login` before looking up a key.
+"""
+
+import argparse
+import os
+
+from google.auth.exceptions import DefaultCredentialsError
 from google.cloud import api_keys_v2
 from google.cloud import language_v1
 
@@ -26,7 +35,7 @@ def lookup_api_key(api_key_string: str) -> None:
     )
     
     # Make the request and obtain the response.
-    lookup_key_response = client.lookup_key(lookup_key_request)
+    lookup_key_response = client.lookup_key(request=lookup_key_request)
     
 
     print(f"Successfully retrieved the API key name: {lookup_key_response}")
@@ -61,5 +70,29 @@ def authenticate_with_api_key(quota_project_id: str, api_key_string: str) -> Non
     print(f"Sentiment: {sentiment.score}, {sentiment.magnitude}")
     print("Successfully authenticated using the API key")   
 
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Look up a Google Cloud API key.")
+    parser.add_argument(
+        "api_key",
+        nargs="?",
+        help="API key to look up (defaults to the GOOGLE_API_KEY environment variable).",
+    )
+    args = parser.parse_args()
+    api_key = args.api_key if args.api_key is not None else os.environ.get("GOOGLE_API_KEY", "")
+    api_key = api_key.strip()
+    if not api_key:
+        parser.error("Provide an API key argument or set GOOGLE_API_KEY.")
+
+    try:
+        lookup_api_key(api_key)
+    except DefaultCredentialsError:
+        parser.exit(
+            1,
+            "Application Default Credentials are missing or invalid. "
+            "Run `gcloud auth application-default login` or configure "
+            "GOOGLE_APPLICATION_CREDENTIALS.\n",
+        )
+
+
 if __name__ == "__main__":
-    lookup_api_key("")
+    main()
