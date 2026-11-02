@@ -4,6 +4,7 @@ node_modules
 cdktf.out
 cdktf.log
 cdktn.out
+cdktn.*.out
 cdktn.log
 *terraform.*.tfstate*
 .gen

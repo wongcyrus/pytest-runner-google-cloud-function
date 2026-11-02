@@ -144,7 +144,12 @@ class PyTestRunnerStack extends TerraformStack {
       environmentVariables: {
         "REPORT_BUCKET": websiteBucketConstruct.bucket.name,
       },
-      additionalDependencies: [artifactRegistryIamMember, websiteBucketConstruct.bucket],
+      // Let the first function initialize the shared function-source bucket.
+      additionalDependencies: [
+        artifactRegistryIamMember,
+        websiteBucketConstruct.bucket,
+        pytestrunnerCloudFunctionConstruct.cloudFunction,
+      ],
     });
 
     new DailySchedulerConstruct(this, "dailyScoreReportScheduler", {
@@ -195,7 +200,7 @@ async function buildStack(scope: Construct, id: string) {
 
 async function createApp(): Promise<App> {
   const app = new App();
-  await buildStack(app, "cdktf");
+  await buildStack(app, process.env.STACK_NAME ?? "cdktf");
   return app;
 }
 
