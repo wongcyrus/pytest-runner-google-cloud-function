@@ -1,5 +1,6 @@
 google-auth
 google-cloud-api-keys
 google-cloud-firestore
+google-cloud-storage
 google-cloud-language
 openpyxl

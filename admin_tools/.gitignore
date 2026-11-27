@@ -1,6 +1,8 @@
 venv
 Namelist.xlsx
 api_keys.xlsx
+api_keys_test.xlsx
+.~lock.*#
 scores.xlsx
 tasks.xlsx
 __pycache__/**

@@ -18,6 +18,7 @@ import { WebsiteBucketConstruct } from "./components/website-bucket-construct";
 import { DailySchedulerConstruct } from "./components/scheduler-construct";
 import { GoogleProjectIamMember } from "./.gen/providers/google-beta/google-project-iam-member";
 import { GoogleProjectServiceIdentity } from "./.gen/providers/google-beta/google-project-service-identity";
+import { SubmissionBucketConstruct } from "./components/submission-bucket-construct";
 dotenv.config();
 
 class PyTestRunnerStack extends TerraformStack {
@@ -82,6 +83,12 @@ class PyTestRunnerStack extends TerraformStack {
     //For the first deployment, it takes a while for API to be enabled.
     // await new Promise(r => setTimeout(r, 30000));
 
+    const submissionBucket = new SubmissionBucketConstruct(this, "submissionBucket", {
+      project: project.projectId,
+      region: process.env.REGION!,
+      dependsOn: cloudFunctionDeploymentConstruct.services,
+    });
+
     const pytestrunnerCloudFunctionConstruct = await CloudFunctionConstruct.create(this, "pytestrunnerCloudFunctionConstruct", {
       functionName: "pytestrunner",
       runtime: "python311",
@@ -92,7 +99,9 @@ class PyTestRunnerStack extends TerraformStack {
       cloudFunctionDeploymentConstruct: cloudFunctionDeploymentConstruct,      
       environmentVariables: {      
         "PREFIX": process.env.PREFIX!,      
+        "SUBMISSION_BUCKET": submissionBucket.bucket.name,
       },
+      submissionBucket,
       additionalDependencies: [artifactRegistryIamMember],
     });
 
@@ -172,6 +181,9 @@ class PyTestRunnerStack extends TerraformStack {
 
     new TerraformOutput(this, "project-id", {
       value: project.projectId,
+    });
+    new TerraformOutput(this, "submission-bucket", {
+      value: submissionBucket.bucket.name,
     });
 
     new TerraformOutput(this, "api-url", {

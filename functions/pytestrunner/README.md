@@ -1,5 +1,12 @@
 # Python Assignment exercises
 
+The deployed runner requires `SUBMISSION_BUCKET`, provisioned by the CDKTF
+private submission-bucket construct. Accepted source is uploaded before tests;
+Firestore stores generation-pinned latest and latest-passing references and
+retains earned marks. The whole HTTP request is limited to 10 MiB; source is
+never truncated or stored inline in new Firestore records. See the root README
+for storage-failure semantics, administrator access and export commands.
+
 Login your Google Cloud Console, open Cloud Shall and run the following commands to enable API.
 ```
 gcloud services enable vision.googleapis.com

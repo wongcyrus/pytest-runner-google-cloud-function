@@ -1,4 +1,5 @@
 import { Construct } from "constructs";
+import { TerraformResource } from "cdktn";
 import { hashElement } from 'folder-hash';
 import { DataArchiveFile } from "../.gen/providers/archive/data-archive-file";
 import { GoogleCloudRunServiceIamBinding } from "../.gen/providers/google-beta/google-cloud-run-service-iam-binding";
@@ -7,6 +8,7 @@ import { GoogleCloudfunctions2FunctionIamBinding } from "../.gen/providers/googl
 import { GoogleServiceAccount } from "../.gen/providers/google-beta/google-service-account";
 import { GoogleStorageBucketObject } from "../.gen/providers/google-beta/google-storage-bucket-object";
 import { CloudFunctionDeploymentConstruct } from "./cloud-function-deployment-construct";
+import { SubmissionBucketConstruct } from "./submission-bucket-construct";
 import path = require("path");
 
 export interface CloudFunctionConstructProps {
@@ -22,6 +24,7 @@ export interface CloudFunctionConstructProps {
     readonly makePublic?: boolean;
     readonly serviceAccount?: GoogleServiceAccount;
     readonly additionalDependencies?: any[];
+    readonly submissionBucket?: SubmissionBucketConstruct;
 }
 
 export class CloudFunctionConstruct extends Construct {
@@ -69,7 +72,10 @@ export class CloudFunctionConstruct extends Construct {
         });
 
 
-        const dependencies = [...props.cloudFunctionDeploymentConstruct.services];
+        const dependencies: TerraformResource[] = [...props.cloudFunctionDeploymentConstruct.services];
+        if (props.submissionBucket) {
+            dependencies.push(props.submissionBucket.grantCreator(this.serviceAccount));
+        }
         if (props.additionalDependencies) {
             dependencies.push(...props.additionalDependencies);
         }

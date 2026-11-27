@@ -2,3 +2,4 @@ functions/pytestrunner/*practical-test-*.zip
 functions/scorereport/Namelist.xlsx
 **/__pycache__/
 *.py[cod]
+admin_tools/final_submissions*.zip
